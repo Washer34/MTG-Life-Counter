@@ -5,6 +5,15 @@ import { GameScreen } from './components/GameScreen';
 import './App.css';
 
 const STORAGE_KEY = 'mtg-life-counter-state';
+type OrientationLock =
+  | 'any'
+  | 'natural'
+  | 'landscape'
+  | 'portrait'
+  | 'portrait-primary'
+  | 'portrait-secondary'
+  | 'landscape-primary'
+  | 'landscape-secondary';
 
 function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -12,25 +21,25 @@ function App() {
   // Attempt to lock orientation on supported devices
   useEffect(() => {
     const lockOrientation = async () => {
-      const orientation = (screen.orientation || (screen as any).mozOrientation || (screen as any).msOrientation);
-      if (screen.orientation && screen.orientation.lock) {
-        try {
-          await screen.orientation.lock('landscape');
-        } catch {
-          // noop - some browsers require user interaction or installation
+      const anyScreen = screen as Screen & {
+        orientation?: ScreenOrientation & { lock?: (orientation: OrientationLock) => Promise<void> };
+        lockOrientation?: (orientation: string) => Promise<void> | boolean;
+        mozLockOrientation?: (orientation: string) => Promise<void> | boolean;
+        msLockOrientation?: (orientation: string) => Promise<void> | boolean;
+      };
+
+      try {
+        if (anyScreen.orientation?.lock) {
+          await anyScreen.orientation.lock('landscape');
+        } else if (typeof anyScreen.lockOrientation === 'function') {
+          anyScreen.lockOrientation('landscape');
+        } else if (typeof anyScreen.mozLockOrientation === 'function') {
+          anyScreen.mozLockOrientation('landscape');
+        } else if (typeof anyScreen.msLockOrientation === 'function') {
+          anyScreen.msLockOrientation('landscape');
         }
-      } else if ((screen as any).lockOrientation) {
-        try {
-          (screen as any).lockOrientation('landscape');
-        } catch {
-          // noop
-        }
-      } else if (orientation && typeof orientation.lock === 'function') {
-        try {
-          await orientation.lock('landscape');
-        } catch {
-          // noop
-        }
+      } catch {
+        // silently ignore when lock is unavailable or rejected
       }
     };
     lockOrientation();

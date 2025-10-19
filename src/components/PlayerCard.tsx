@@ -65,8 +65,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const [shortcutScope, setShortcutScope] = useState<DamageShortcutScope>('others');
   const deathConfirmDeclined = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const comboIdleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const comboCleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const comboIdleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const comboCleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const comboActiveRef = useRef(false);
   const previousLifeRef = useRef(player.life);
 

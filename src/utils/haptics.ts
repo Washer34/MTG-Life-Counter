@@ -10,8 +10,8 @@ const vibrate = (pattern: VibrationPattern) => {
   navigator.vibrate(pattern);
 };
 
-const strongPulse = [0, 32, 24, 32] as const;
-const mediumPulse = [0, 22, 18, 22] as const;
+const strongPulse: number[] = [0, 32, 24, 32];
+const mediumPulse: number[] = [0, 22, 18, 22];
 const lightPulse = 16;
 
 export const HAPTICS = {
