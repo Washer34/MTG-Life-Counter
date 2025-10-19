@@ -1,0 +1,16 @@
+{
+  "name": "MTG Life Counter",
+  "short_name": "Life Counter",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1410",
+  "theme_color": "#1a1410",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

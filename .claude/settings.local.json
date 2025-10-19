@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm create vite@latest . --template react-ts)",
+      "Bash(pnpm init)",
+      "Bash(pnpm add -D vite @vitejs/plugin-react typescript @types/react @types/react-dom vite-plugin-pwa workbox-window)",
+      "Bash(pnpm add react react-dom)",
+      "Bash(pnpm dev)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

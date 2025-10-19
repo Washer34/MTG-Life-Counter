@@ -1,0 +1,401 @@
+.game-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.game-menu {
+  background: linear-gradient(180deg, var(--color-stone) 0%, var(--color-stone-dark) 100%);
+  padding: 30px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background pattern - diagonal movement like AoE2 */
+.game-menu::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 35px,
+      rgba(212, 175, 55, 0.03) 35px,
+      rgba(212, 175, 55, 0.03) 70px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 35px,
+      rgba(139, 69, 19, 0.04) 35px,
+      rgba(139, 69, 19, 0.04) 70px
+    );
+  animation: menuBackgroundMove 40s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Floating orb effect */
+.game-menu::after {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+  animation: menuOrbFloat 20s ease-in-out infinite;
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes menuBackgroundMove {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(50px, 50px) rotate(360deg);
+  }
+}
+
+@keyframes menuOrbFloat {
+  0%, 100% {
+    top: -10%;
+    left: -10%;
+    opacity: 0.4;
+  }
+  25% {
+    top: 60%;
+    left: 70%;
+    opacity: 0.7;
+  }
+  50% {
+    top: 70%;
+    left: -5%;
+    opacity: 0.5;
+  }
+  75% {
+    top: 20%;
+    left: 60%;
+    opacity: 0.6;
+  }
+}
+
+/* Ensure all content is above the animated background */
+.game-menu > * {
+  position: relative;
+  z-index: 1;
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(139, 0, 0, 0.8);
+  color: white;
+  border: 2px solid #8b0000;
+  font-size: 1.5rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-title {
+  text-align: center;
+  font-size: 2rem;
+  color: var(--color-gold);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.menu-section {
+  margin: 0;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+}
+
+.menu-section:last-of-type {
+  border-bottom: none;
+}
+
+.menu-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.section-title {
+  color: var(--color-gold);
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.game-info {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 4px;
+  border: 1px solid var(--color-gold-dark);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.info-row span:first-child {
+  color: var(--color-text-dark);
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+}
+
+.info-row span:last-child {
+  color: var(--color-gold);
+  font-weight: bold;
+}
+
+.menu-btn {
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  border-radius: 4px;
+}
+
+.menu-btn.warning {
+  background: linear-gradient(180deg, #f39c12 0%, #d68910 100%);
+  border-color: #d68910;
+  color: var(--color-stone-dark);
+}
+
+.menu-btn.warning:hover {
+  background: linear-gradient(180deg, #d68910 0%, #f39c12 100%);
+}
+
+.menu-btn.danger {
+  background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+  border-color: #8b0000;
+  color: white;
+}
+
+.menu-btn.danger:hover {
+  background: linear-gradient(180deg, #c0392b 0%, #e74c3c 100%);
+}
+
+.random-result,
+.dice-result,
+.coin-result {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-gold);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  margin: 15px 0;
+  border-radius: 4px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dice-section {
+  margin-top: 15px;
+}
+
+.dice-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.dice-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  color: var(--color-text-dark);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.dice-label input {
+  margin-top: 4px;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 6px;
+}
+
+.dice-roll-btn {
+  flex: 1;
+  min-width: 150px;
+  padding: 12px;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--color-blue) 0%, #0a4d7a 100%);
+  color: white;
+  border-color: var(--color-blue);
+  border-radius: 4px;
+}
+
+.dice-roll-btn:hover {
+  background: linear-gradient(135deg, #0a4d7a 0%, var(--color-blue) 100%);
+}
+
+.dice-result-rolls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.dice-roll-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(14, 104, 171, 0.3);
+  border: 1px solid rgba(14, 104, 171, 0.6);
+  font-size: 1.1rem;
+}
+
+.dice-result-total {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-dark);
+}
+
+.random-player-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.player-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--color-text);
+  transition: all 0.2s ease;
+}
+
+.player-chip.selected {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+.player-chip.reset {
+  background: rgba(139, 0, 0, 0.3);
+  border-color: rgba(139, 0, 0, 0.8);
+}
+
+.player-chip:hover {
+  transform: translateY(-1px);
+}
+
+.confirm-section {
+  background: rgba(139, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 4px;
+  border: 2px solid var(--color-danger);
+  margin-bottom: 10px;
+}
+
+.confirm-text {
+  text-align: center;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.confirm-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.confirm-yes,
+.confirm-no {
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.confirm-yes {
+  background: linear-gradient(135deg, var(--color-danger) 0%, #5a0000 100%);
+  color: white;
+  border-color: var(--color-danger);
+}
+
+.confirm-no {
+  background: linear-gradient(135deg, var(--color-stone-light) 0%, var(--color-stone) 100%);
+  border-color: var(--color-gold);
+}
+
+.menu-btn-close {
+  width: 100%;
+  padding: 15px;
+  margin-top: 10px;
+  font-size: 1.1rem;
+  border-radius: 4px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .game-menu {
+    padding: 20px;
+  }
+
+  .menu-title {
+    font-size: 1.5rem;
+  }
+}
