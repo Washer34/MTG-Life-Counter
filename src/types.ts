@@ -3,11 +3,37 @@ export type ManaColor = 'white' | 'blue' | 'black' | 'red' | 'green' | 'colorles
 
 export type DamageShortcutScope = 'all' | 'others' | 'self';
 
+export type ThemeId = 'classic' | 'innistrad' | 'ixalan' | 'phyrexia';
+
+export interface ThemePlayerVariant {
+  id: string;
+  name: string;
+  overlay: string;
+  border: string;
+  accent: string;
+  glow: string;
+}
+
+export interface ThemeDefinition {
+  id: ThemeId;
+  name: string;
+  description: string;
+  preview: string;
+  playerVariants: ThemePlayerVariant[];
+}
+
 export interface DamageShortcut {
   id: string;
   label: string;
   amount: number;
   scope: DamageShortcutScope;
+}
+
+export interface CustomResource {
+  id: string;
+  label: string;
+  icon: string;
+  value: number;
 }
 
 // Player state
@@ -27,12 +53,32 @@ export interface Player {
   treasures?: number;
   clues?: number;
   emblems?: number;
+  customResources?: CustomResource[];
 }
+
+export type GameLogEntryType =
+  | 'life'
+  | 'resource'
+  | 'commander'
+  | 'shortcut'
+  | 'monarch'
+  | 'info';
+
+export interface GameLogEntry {
+  id: string;
+  timestamp: number;
+  type: GameLogEntryType;
+  message: string;
+  playerIds?: string[];
+}
+
+export type GameLogDraft = Omit<GameLogEntry, 'id' | 'timestamp'>;
 
 // Game configuration
 export interface GameConfig {
   playerCount: number;
   startingLife: number;
+  themeId: ThemeId;
 }
 
 // Game state
@@ -40,6 +86,7 @@ export interface GameState {
   players: Player[];
   config: GameConfig;
   startTime: number;
+  log: GameLogEntry[];
 }
 
 // Dice types

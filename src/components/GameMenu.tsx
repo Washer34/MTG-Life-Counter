@@ -1,20 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState } from '../types';
+import { GameState, ThemeId, GameLogEntry } from '../types';
 import { HAPTICS } from '../utils/haptics';
+import { THEME_DEFINITIONS } from '../utils/themes';
 import './GameMenu.css';
 
 interface GameMenuProps {
   gameState: GameState;
+  log: GameLogEntry[];
+  selectedTheme: ThemeId;
   onClose: () => void;
   onResetGame: () => void;
   onNewGame: () => void;
+  onChangeTheme: (themeId: ThemeId) => void;
+  onClearLog: () => void;
 }
 
 export const GameMenu: React.FC<GameMenuProps> = ({
   gameState,
+  log,
+  selectedTheme,
   onClose,
   onResetGame,
   onNewGame,
+  onChangeTheme,
+  onClearLog,
 }) => {
   const [showDice, setShowDice] = useState(false);
   const [diceRolls, setDiceRolls] = useState<number[]>([]);
@@ -23,6 +32,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({
   const [coinResult, setCoinResult] = useState<string | null>(null);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showConfirmNew, setShowConfirmNew] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
   const diceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const randomTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,6 +62,18 @@ export const GameMenu: React.FC<GameMenuProps> = ({
     });
     setPlayerPool(initialPool);
   }, [gameState.players]);
+
+  useEffect(() => {
+    if (!showPreferences) return;
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowPreferences(false);
+        HAPTICS.cancel();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showPreferences]);
 
   const rollDice = (count: number, sides: number) => {
     const rolls = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
@@ -108,7 +130,14 @@ export const GameMenu: React.FC<GameMenuProps> = ({
 
   const handleClose = () => {
     HAPTICS.menuClose();
+    setShowPreferences(false);
     onClose();
+  };
+
+  const handleThemeSelect = (themeId: ThemeId) => {
+    if (themeId === selectedTheme) return;
+    HAPTICS.selection();
+    onChangeTheme(themeId);
   };
 
   const getGameDuration = () => {
@@ -154,6 +183,16 @@ export const GameMenu: React.FC<GameMenuProps> = ({
 
         <div className="menu-section">
           <h3 className="section-title">Utilitaires</h3>
+
+          <button
+            className="menu-btn"
+            onClick={() => {
+              HAPTICS.selection();
+              setShowPreferences(true);
+            }}
+          >
+            ⚙ Paramètres
+          </button>
 
           <button
             className="menu-btn"
@@ -351,6 +390,42 @@ export const GameMenu: React.FC<GameMenuProps> = ({
             </div>
           )}
         </div>
+
+        <div className="menu-section">
+          <h3 className="section-title">Journal</h3>
+          {log.length === 0 ? (
+            <p className="log-empty">Aucun évènement pour le moment.</p>
+          ) : (
+            <div className="log-list">
+              {log
+                .slice()
+                .reverse()
+                .map((entry) => {
+                  const time = new Date(entry.timestamp).toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  return (
+                    <div key={entry.id} className={`log-entry log-${entry.type}`}>
+                      <span className="log-time">{time}</span>
+                      <span className="log-message">{entry.message}</span>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+          <button
+            type="button"
+            className="menu-btn log-clear"
+            onClick={() => {
+              HAPTICS.cancel();
+              onClearLog();
+            }}
+            disabled={log.length === 0}
+          >
+            Effacer le journal
+          </button>
+        </div>
         </div>
 
         <button
@@ -360,6 +435,56 @@ export const GameMenu: React.FC<GameMenuProps> = ({
           Fermer
         </button>
       </div>
+
+      {showPreferences && (
+        <div
+          className="menu-modal-overlay"
+          onClick={() => {
+            HAPTICS.cancel();
+            setShowPreferences(false);
+          }}
+        >
+          <div
+            className="menu-modal ornate-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="menu-modal-close"
+              onClick={() => {
+                HAPTICS.cancel();
+                setShowPreferences(false);
+              }}
+            >
+              ✕
+            </button>
+            <h3 className="menu-modal-title">Paramètres</h3>
+            <div className="menu-modal-section">
+              <h4 className="menu-modal-heading">Packs de thème</h4>
+              <div className="theme-grid">
+                {THEME_DEFINITIONS.map((theme) => {
+                  const active = theme.id === selectedTheme;
+                  return (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      className={`theme-card ${active ? 'selected' : ''}`}
+                      onClick={() => handleThemeSelect(theme.id)}
+                    >
+                      <span className="theme-preview" style={{ background: theme.preview }} />
+                      <span className="theme-meta">
+                        <span className="theme-name">{theme.name}</span>
+                        <span className="theme-description">{theme.description}</span>
+                      </span>
+                      {active && <span className="theme-check">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

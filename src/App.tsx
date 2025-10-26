@@ -1,10 +1,22 @@
 import { useState, useEffect } from 'react';
-import { GameState, GameConfig, Player, ManaColor, DamageShortcut } from './types';
+import {
+  GameState,
+  GameConfig,
+  Player,
+  ManaColor,
+  DamageShortcut,
+  ThemeId,
+  GameLogDraft,
+  GameLogEntry,
+} from './types';
 import { SetupScreen } from './components/SetupScreen';
 import { GameScreen } from './components/GameScreen';
+import { applyTheme, loadStoredTheme, storeTheme } from './utils/theme';
+import { THEME_DEFINITIONS } from './utils/themes';
 import './App.css';
 
 const STORAGE_KEY = 'mtg-life-counter-state';
+const LOG_LIMIT = 80;
 type OrientationLock =
   | 'any'
   | 'natural'
@@ -15,8 +27,24 @@ type OrientationLock =
   | 'landscape-primary'
   | 'landscape-secondary';
 
+const createLogEntry = (entry: GameLogDraft): GameLogEntry => ({
+  id: `log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+  timestamp: Date.now(),
+  ...entry,
+});
+
+const pushLogEntries = (log: GameLogEntry[] = [], entries: GameLogDraft[]) => {
+  if (entries.length === 0) return log;
+  const nextLog = [...log, ...entries.map(createLogEntry)];
+  return nextLog.length > LOG_LIMIT ? nextLog.slice(nextLog.length - LOG_LIMIT) : nextLog;
+};
+
+const getThemeName = (themeId: ThemeId) =>
+  THEME_DEFINITIONS.find((theme) => theme.id === themeId)?.name ?? themeId;
+
 function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState<ThemeId>('classic');
 
   // Attempt to lock orientation on supported devices
   useEffect(() => {
@@ -45,13 +73,44 @@ function App() {
     lockOrientation();
   }, []);
 
-  // Load saved game state on mount
+  // Load saved game state on mount and restore theme
   useEffect(() => {
+    const storedTheme = loadStoredTheme();
+    if (storedTheme) {
+      setSelectedTheme(storedTheme);
+    }
+
     const savedState = localStorage.getItem(STORAGE_KEY);
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
-        setGameState(parsed);
+        const loadedTheme: ThemeId = parsed?.config?.themeId ?? storedTheme ?? 'classic';
+        const normalisedPlayers: Player[] = (parsed.players ?? []).map((player: Player) => ({
+          ...player,
+          commanderDamage: player.commanderDamage ?? {},
+          damageShortcuts: player.damageShortcuts ?? [],
+          lifeHistory: player.lifeHistory ?? [],
+          commanderCastCount: player.commanderCastCount ?? 0,
+          treasures: player.treasures ?? 0,
+          clues: player.clues ?? 0,
+          emblems: player.emblems ?? 0,
+          customResources: player.customResources ?? [],
+        }));
+
+        const normalisedState: GameState = {
+          players: normalisedPlayers,
+          config: {
+            ...parsed.config,
+            playerCount: (parsed.config?.playerCount ?? normalisedPlayers.length) || 4,
+            startingLife: parsed.config?.startingLife ?? 40,
+            themeId: loadedTheme,
+          },
+          startTime: parsed.startTime ?? Date.now(),
+          log: parsed.log ?? [],
+        };
+
+        setSelectedTheme(loadedTheme);
+        setGameState(normalisedState);
       } catch (e) {
         console.error('Failed to load saved game state:', e);
       }
@@ -65,11 +124,56 @@ function App() {
     }
   }, [gameState]);
 
+  // Apply and persist theme whenever it changes
+  useEffect(() => {
+    applyTheme(selectedTheme);
+    storeTheme(selectedTheme);
+  }, [selectedTheme]);
+
+  const appendLog = (entry: GameLogDraft) => {
+    setGameState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        log: pushLogEntries(prev.log, [entry]),
+      };
+    });
+  };
+
+  const handleSelectTheme = (themeId: ThemeId) => {
+    if (themeId === selectedTheme) return;
+    setSelectedTheme(themeId);
+    setGameState((prev) => {
+      if (!prev) return prev;
+      const entries: GameLogDraft[] = [
+        {
+          type: 'info',
+          message: `Thème changé pour « ${getThemeName(themeId)} ».`,
+        },
+      ];
+      return {
+        ...prev,
+        config: { ...prev.config, themeId },
+        log: pushLogEntries(prev.log, entries),
+      };
+    });
+  };
+
+  const handleClearLog = () => {
+    setGameState((prev) => {
+      if (!prev) return prev;
+      return { ...prev, log: [] };
+    });
+  };
+
   const handleStartGame = (
     config: GameConfig,
     playerNames: string[],
     playerColors: ManaColor[]
   ) => {
+    if (config.themeId !== selectedTheme) {
+      setSelectedTheme(config.themeId);
+    }
     const players: Player[] = playerNames.map((name, index) => ({
       id: `player-${index}`,
       name,
@@ -85,12 +189,14 @@ function App() {
       treasures: 0,
       clues: 0,
       emblems: 0,
+      customResources: [],
     }));
 
     const newGameState: GameState = {
       players,
       config,
       startTime: Date.now(),
+      log: [],
     };
 
     setGameState(newGameState);
@@ -125,12 +231,22 @@ function App() {
         treasures: 0,
         clues: 0,
         emblems: 0,
+        customResources: (player.customResources ?? []).map((resource) => ({
+          ...resource,
+          value: 0,
+        })),
       }));
 
       return {
         ...prev,
         players: resetPlayers,
         startTime: Date.now(),
+        log: pushLogEntries([], [
+          {
+            type: 'info',
+            message: 'La partie est réinitialisée.',
+          },
+        ]),
       };
     });
   };
@@ -149,7 +265,25 @@ function App() {
         isMonarch: playerId ? player.id === playerId : false,
       }));
 
-      return { ...prev, players };
+      const target = playerId ? prev.players.find((player) => player.id === playerId) : null;
+      const entries: GameLogDraft[] = [
+        playerId && target
+          ? {
+              type: 'monarch',
+              message: `${target.name} devient le Monarque.`,
+              playerIds: [target.id],
+            }
+          : {
+              type: 'monarch',
+              message: 'La couronne est abandonnée.',
+            },
+      ];
+
+      return {
+        ...prev,
+        players,
+        log: pushLogEntries(prev.log, entries),
+      };
     });
   };
 
@@ -159,6 +293,8 @@ function App() {
     setGameState((prev) => {
       if (!prev) return prev;
 
+      const initiator = prev.players.find((player) => player.id === triggerPlayerId);
+      const entries: GameLogDraft[] = [];
       const players = prev.players.map((player) => {
         const applies =
           shortcut.scope === 'all' ||
@@ -171,10 +307,19 @@ function App() {
 
         const history = player.lifeHistory || [];
         const newHistory = [player.life, ...history].slice(0, 5);
+        const newLife = player.life + shortcut.amount;
+
+        const originLabel = shortcut.label ? `« ${shortcut.label} »` : 'un raccourci';
+        const sourceLabel = initiator ? ` par ${initiator.name}` : '';
+        entries.push({
+          type: 'shortcut',
+          message: `${player.name} ${shortcut.amount > 0 ? '+' : ''}${shortcut.amount} PV via ${originLabel}${sourceLabel} (→ ${newLife} PV).`,
+          playerIds: [player.id],
+        });
 
         return {
           ...player,
-          life: player.life + shortcut.amount,
+          life: newLife,
           lifeHistory: newHistory,
         };
       });
@@ -182,6 +327,7 @@ function App() {
       return {
         ...prev,
         players,
+        log: pushLogEntries(prev.log, entries),
       };
     });
   };
@@ -189,15 +335,23 @@ function App() {
   return (
     <div className="app">
       {!gameState ? (
-        <SetupScreen onStartGame={handleStartGame} />
+        <SetupScreen
+          onStartGame={handleStartGame}
+          selectedTheme={selectedTheme}
+        />
       ) : (
         <GameScreen
           gameState={gameState}
+          log={gameState.log}
+          selectedTheme={selectedTheme}
           onUpdatePlayer={handleUpdatePlayer}
           onResetGame={handleResetGame}
           onNewGame={handleNewGame}
           onSetMonarch={handleSetMonarch}
           onApplyShortcut={handleApplyLifeShortcut}
+          onLog={appendLog}
+          onChangeTheme={handleSelectTheme}
+          onClearLog={handleClearLog}
         />
       )}
     </div>

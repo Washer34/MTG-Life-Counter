@@ -1,6 +1,5 @@
-/* Age of Empire inspired theme with MTG colors */
+/* Theme system */
 :root {
-  /* AoE Base colors */
   --color-stone: #2a2419;
   --color-stone-light: #3d3428;
   --color-stone-dark: #1a1410;
@@ -8,7 +7,6 @@
   --color-gold-dark: #b8941f;
   --color-bronze: #cd7f32;
 
-  /* MTG Mana colors */
   --color-white: #f0f0d8;
   --color-blue: #0e68ab;
   --color-black: #150b00;
@@ -16,13 +14,156 @@
   --color-green: #00733e;
   --color-colorless: #ccc2c0;
 
-  /* UI colors */
   --color-bg: var(--color-stone-dark);
   --color-text: #f5f5dc;
   --color-text-dark: #8b7355;
   --color-border: var(--color-gold);
   --color-danger: #8b0000;
   --color-success: #2d5016;
+  --app-background: linear-gradient(135deg, var(--color-stone-dark) 0%, var(--color-stone) 100%);
+  --board-background:
+    radial-gradient(circle at 20% 10%, rgba(212, 175, 55, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 82% 35%, rgba(139, 69, 19, 0.08) 0%, transparent 65%),
+    repeating-linear-gradient(135deg, rgba(42, 33, 23, 0.48) 0px, rgba(42, 33, 23, 0.48) 38px, rgba(22, 17, 12, 0.48) 38px, rgba(22, 17, 12, 0.48) 76px),
+    linear-gradient(140deg, #1f1610 0%, #36271a 55%, #22170f 100%);
+  --player-card-background:
+    radial-gradient(circle at 18% -12%, rgba(212, 175, 55, 0.22) 0%, transparent 58%),
+    radial-gradient(circle at 80% 112%, rgba(138, 75, 28, 0.18) 0%, transparent 52%),
+    linear-gradient(155deg, rgba(29, 22, 16, 0.96) 0%, rgba(18, 13, 9, 0.96) 100%);
+  --setup-background:
+    radial-gradient(circle at 30% -15%, rgba(212, 175, 55, 0.16) 0%, transparent 55%),
+    radial-gradient(circle at 80% 120%, rgba(139, 69, 19, 0.12) 0%, transparent 45%),
+    linear-gradient(140deg, #312417 0%, #22170f 50%, #3a2a1c 100%);
+  --menu-background:
+    radial-gradient(circle at 15% 15%, rgba(212, 175, 55, 0.12) 0%, transparent 55%),
+    radial-gradient(circle at 80% 85%, rgba(214, 161, 79, 0.08) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(32, 24, 18, 0.94) 0%, rgba(18, 12, 8, 0.94) 100%);
+}
+
+[data-theme="classic"] {
+  --color-stone: #2a2419;
+  --color-stone-light: #3d3428;
+  --color-stone-dark: #1a1410;
+  --color-gold: #d4af37;
+  --color-gold-dark: #b8941f;
+  --color-bronze: #cd7f32;
+  --color-text: #f5f5dc;
+  --color-text-dark: #8b7355;
+  --color-border: var(--color-gold);
+  --app-background: linear-gradient(135deg, var(--color-stone-dark) 0%, var(--color-stone) 100%);
+  --board-background:
+    radial-gradient(circle at 20% 10%, rgba(212, 175, 55, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 82% 35%, rgba(139, 69, 19, 0.08) 0%, transparent 65%),
+    repeating-linear-gradient(135deg, rgba(42, 33, 23, 0.48) 0px, rgba(42, 33, 23, 0.48) 38px, rgba(22, 17, 12, 0.48) 38px, rgba(22, 17, 12, 0.48) 76px),
+    linear-gradient(140deg, #1f1610 0%, #36271a 55%, #22170f 100%);
+  --player-card-background:
+    radial-gradient(circle at 18% -12%, rgba(212, 175, 55, 0.22) 0%, transparent 58%),
+    radial-gradient(circle at 80% 112%, rgba(138, 75, 28, 0.18) 0%, transparent 52%),
+    linear-gradient(155deg, rgba(29, 22, 16, 0.96) 0%, rgba(18, 13, 9, 0.96) 100%);
+  --setup-background:
+    radial-gradient(circle at 30% -15%, rgba(212, 175, 55, 0.16) 0%, transparent 55%),
+    radial-gradient(circle at 80% 120%, rgba(139, 69, 19, 0.12) 0%, transparent 45%),
+    linear-gradient(140deg, #312417 0%, #22170f 50%, #3a2a1c 100%);
+  --menu-background:
+    radial-gradient(circle at 15% 15%, rgba(212, 175, 55, 0.12) 0%, transparent 55%),
+    radial-gradient(circle at 80% 85%, rgba(214, 161, 79, 0.08) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(32, 24, 18, 0.94) 0%, rgba(18, 12, 8, 0.94) 100%);
+}
+
+[data-theme="innistrad"] {
+  --color-stone: #241c32;
+  --color-stone-light: #352a4a;
+  --color-stone-dark: #120c1c;
+  --color-gold: #9d8ff2;
+  --color-gold-dark: #6f5fc3;
+  --color-bronze: #483774;
+  --color-text: #f2ecff;
+  --color-text-dark: #a79acb;
+  --color-border: var(--color-gold);
+  --color-danger: #a21c3d;
+  --color-success: #2c6e80;
+  --app-background: radial-gradient(circle at top, #1f1531 0%, #0f091b 45%, #06040f 100%);
+  --board-background:
+    radial-gradient(circle at 18% 15%, rgba(96, 78, 140, 0.22) 0%, transparent 58%),
+    radial-gradient(circle at 90% 30%, rgba(44, 70, 120, 0.18) 0%, transparent 60%),
+    repeating-linear-gradient(145deg, rgba(22, 17, 32, 0.55) 0px, rgba(22, 17, 32, 0.55) 30px, rgba(9, 6, 18, 0.55) 30px, rgba(9, 6, 18, 0.55) 60px),
+    linear-gradient(145deg, #140c1e 0%, #23132f 50%, #0b0316 100%);
+  --player-card-background:
+    radial-gradient(circle at 15% -10%, rgba(110, 90, 180, 0.26) 0%, transparent 58%),
+    radial-gradient(circle at 80% 120%, rgba(32, 56, 110, 0.22) 0%, transparent 52%),
+    linear-gradient(165deg, rgba(21, 15, 35, 0.96) 0%, rgba(10, 6, 22, 0.96) 100%);
+  --setup-background:
+    radial-gradient(circle at 40% -25%, rgba(162, 140, 255, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 110% 80%, rgba(52, 78, 140, 0.15) 0%, transparent 50%),
+    linear-gradient(150deg, #1b132a 0%, #0f091d 50%, #271945 100%);
+  --menu-background:
+    radial-gradient(circle at 12% 18%, rgba(138, 110, 210, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 85% 82%, rgba(70, 96, 200, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(18, 12, 30, 0.95) 0%, rgba(8, 5, 18, 0.95) 100%);
+}
+
+[data-theme="ixalan"] {
+  --color-stone: #2b3f2a;
+  --color-stone-light: #3e6340;
+  --color-stone-dark: #162514;
+  --color-gold: #f4c95d;
+  --color-gold-dark: #d99a1b;
+  --color-bronze: #b6721e;
+  --color-text: #faf4de;
+  --color-text-dark: #c9b681;
+  --color-border: var(--color-gold);
+  --color-danger: #d35400;
+  --color-success: #1e824c;
+  --app-background: linear-gradient(135deg, #143522 0%, #255f3a 55%, #d7921a 100%);
+  --board-background:
+    radial-gradient(circle at 15% 10%, rgba(66, 160, 104, 0.22) 0%, transparent 60%),
+    radial-gradient(circle at 85% 25%, rgba(216, 146, 40, 0.18) 0%, transparent 58%),
+    repeating-linear-gradient(140deg, rgba(27, 55, 38, 0.5) 0px, rgba(27, 55, 38, 0.5) 35px, rgba(16, 32, 22, 0.5) 35px, rgba(16, 32, 22, 0.5) 70px),
+    linear-gradient(150deg, #1a3825 0%, #104d33 55%, #36220e 100%);
+  --player-card-background:
+    radial-gradient(circle at 20% -8%, rgba(91, 190, 120, 0.25) 0%, transparent 55%),
+    radial-gradient(circle at 85% 115%, rgba(235, 168, 52, 0.2) 0%, transparent 52%),
+    linear-gradient(160deg, rgba(18, 44, 30, 0.95) 0%, rgba(12, 30, 22, 0.95) 100%);
+  --setup-background:
+    radial-gradient(circle at 30% -25%, rgba(226, 176, 74, 0.2) 0%, transparent 55%),
+    radial-gradient(circle at 110% 80%, rgba(38, 96, 62, 0.18) 0%, transparent 50%),
+    linear-gradient(150deg, #1a3c26 0%, #0f2719 45%, #3f2a0d 100%);
+  --menu-background:
+    radial-gradient(circle at 10% 18%, rgba(232, 178, 70, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 85% 82%, rgba(52, 132, 92, 0.15) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(21, 46, 33, 0.95) 0%, rgba(12, 27, 20, 0.95) 100%);
+}
+
+[data-theme="phyrexia"] {
+  --color-stone: #3c1117;
+  --color-stone-light: #5a1b23;
+  --color-stone-dark: #150406;
+  --color-gold: #ff7b7b;
+  --color-gold-dark: #cc4c55;
+  --color-bronze: #802632;
+  --color-text: #ffeaea;
+  --color-text-dark: #d0a7aa;
+  --color-border: var(--color-gold);
+  --color-danger: #ff3b3f;
+  --color-success: #5f9ea0;
+  --app-background: radial-gradient(circle at center, #4a0d16 0%, #210308 60%, #0c0102 100%);
+  --board-background:
+    radial-gradient(circle at 18% 12%, rgba(180, 40, 60, 0.2) 0%, transparent 58%),
+    radial-gradient(circle at 88% 32%, rgba(120, 16, 28, 0.22) 0%, transparent 60%),
+    repeating-linear-gradient(140deg, rgba(30, 6, 10, 0.6) 0px, rgba(30, 6, 10, 0.6) 32px, rgba(10, 0, 2, 0.6) 32px, rgba(10, 0, 2, 0.6) 64px),
+    linear-gradient(150deg, #180204 0%, #32060b 55%, #0b0102 100%);
+  --player-card-background:
+    radial-gradient(circle at 20% -10%, rgba(200, 60, 90, 0.26) 0%, transparent 55%),
+    radial-gradient(circle at 85% 115%, rgba(100, 15, 25, 0.22) 0%, transparent 52%),
+    linear-gradient(165deg, rgba(22, 4, 6, 0.97) 0%, rgba(8, 0, 1, 0.97) 100%);
+  --setup-background:
+    radial-gradient(circle at 25% -22%, rgba(210, 60, 90, 0.2) 0%, transparent 55%),
+    radial-gradient(circle at 110% 82%, rgba(98, 20, 30, 0.2) 0%, transparent 50%),
+    linear-gradient(150deg, #2b050a 0%, #140104 50%, #3a080f 100%);
+  --menu-background:
+    radial-gradient(circle at 8% 18%, rgba(204, 64, 92, 0.2) 0%, transparent 55%),
+    radial-gradient(circle at 86% 82%, rgba(112, 24, 32, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(18, 2, 4, 0.96) 0%, rgba(7, 1, 2, 0.96) 100%);
 }
 
 * {
@@ -33,7 +174,7 @@
 
 body {
   font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-  background: linear-gradient(135deg, var(--color-stone-dark) 0%, var(--color-stone) 100%);
+  background: var(--app-background);
   color: var(--color-text);
   overflow: hidden;
   -webkit-user-select: none;

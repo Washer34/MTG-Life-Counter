@@ -1,29 +1,49 @@
 import React, { useState } from 'react';
-import { GameState, Player, DamageShortcut } from '../types';
+import {
+  GameState,
+  Player,
+  DamageShortcut,
+  GameLogDraft,
+  ThemeId,
+  GameLogEntry,
+} from '../types';
 import { PlayerCard } from './PlayerCard';
 import { GameMenu } from './GameMenu';
 import { HAPTICS } from '../utils/haptics';
+import { THEME_DEFINITIONS } from '../utils/themes';
 import './GameScreen.css';
 
 interface GameScreenProps {
   gameState: GameState;
+  log: GameLogEntry[];
+  selectedTheme: ThemeId;
   onUpdatePlayer: (playerId: string, updates: Partial<Player>) => void;
   onResetGame: () => void;
   onNewGame: () => void;
   onSetMonarch: (playerId: string | null) => void;
   onApplyShortcut: (playerId: string, shortcut: DamageShortcut) => void;
+  onLog: (entry: GameLogDraft) => void;
+  onChangeTheme: (themeId: ThemeId) => void;
+  onClearLog: () => void;
 }
 
 export const GameScreen: React.FC<GameScreenProps> = ({
   gameState,
+  log,
+  selectedTheme,
   onUpdatePlayer,
   onResetGame,
   onNewGame,
   onSetMonarch,
   onApplyShortcut,
+  onLog,
+  onChangeTheme,
+  onClearLog,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { players } = gameState;
+  const themeDefinition = THEME_DEFINITIONS.find((theme) => theme.id === selectedTheme);
+  const playerVariants = themeDefinition?.playerVariants ?? [];
 
   // Calculate layout based on player count
   const getLayoutClass = () => {
@@ -39,7 +59,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   return (
     <div className="game-screen">
       <div className={`players-grid ${getLayoutClass()}`}>
-        {players.map((player) => (
+        {players.map((player, index) => (
           <PlayerCard
             key={player.id}
             player={player}
@@ -47,6 +67,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             onUpdate={(updates) => onUpdatePlayer(player.id, updates)}
             onSetMonarch={(active) => onSetMonarch(active ? player.id : null)}
             onApplyShortcut={(shortcut) => onApplyShortcut(player.id, shortcut)}
+            onLog={onLog}
+            variant={playerVariants.length ? playerVariants[index % playerVariants.length] : undefined}
           />
         ))}
       </div>
@@ -64,11 +86,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       {menuOpen && (
         <GameMenu
           gameState={gameState}
+          log={log}
+          selectedTheme={selectedTheme}
           onClose={() => setMenuOpen(false)}
           onResetGame={onResetGame}
           onNewGame={onNewGame}
+          onChangeTheme={onChangeTheme}
+          onClearLog={onClearLog}
         />
       )}
+
     </div>
   );
 };

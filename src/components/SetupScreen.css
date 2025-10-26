@@ -5,10 +5,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background:
-    radial-gradient(ellipse at top, rgba(212, 175, 55, 0.08), transparent 65%),
-    radial-gradient(ellipse at bottom, rgba(205, 127, 50, 0.08), transparent 65%),
-    linear-gradient(140deg, #2b2117 0%, #3d3123 40%, #5b452e 100%);
+  background: var(--setup-background);
   position: relative;
   overflow: hidden;
 }
@@ -121,7 +118,7 @@
 }
 
 .setup-container {
-  background: linear-gradient(180deg, var(--color-stone) 0%, var(--color-stone-dark) 100%);
+  background: var(--menu-background);
   padding: 30px;
   max-width: 600px;
   width: 100%;
@@ -175,6 +172,87 @@
   flex-direction: column;
   gap: 20px;
   margin-bottom: 30px;
+}
+
+.theme-section {
+  margin-bottom: 30px;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.theme-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(212, 175, 55, 0.25);
+  border-radius: 10px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: none;
+  color: var(--color-text);
+  font-weight: normal;
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.55);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+}
+
+.theme-card.selected {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.35);
+}
+
+.theme-preview {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+}
+
+.theme-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.theme-name {
+  font-size: 1rem;
+  color: var(--color-gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.theme-description {
+  font-size: 0.85rem;
+  color: var(--color-text-dark);
+}
+
+.theme-check {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 1.2rem;
+  color: var(--color-gold);
 }
 
 .setup-label {
@@ -234,10 +312,78 @@
   gap: 10px;
 }
 
+.player-name-custom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .player-name-input {
-  width: 100%;
-  font-size: 1rem;
+  flex: 1;
+  padding: 8px 10px;
   border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.player-name-input:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+
+.player-name-cancel {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.player-name-cancel:hover {
+  background: rgba(212, 175, 55, 0.18);
+  transform: scale(1.05);
+}
+
+.player-name-cancel:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+
+.player-name-dropdown {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  appearance: none;
+  background-image: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(0, 0, 0, 0.25));
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.player-name-dropdown:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+
+.player-name-dropdown option {
+  background: var(--menu-background);
+  color: var(--color-text);
 }
 
 .color-selector {

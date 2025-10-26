@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Player, DamageShortcut, DamageShortcutScope } from '../types';
+import {
+  Player,
+  DamageShortcut,
+  DamageShortcutScope,
+  CustomResource,
+  GameLogDraft,
+  ThemePlayerVariant,
+} from '../types';
 import { HAPTICS } from '../utils/haptics';
 import './PlayerCard.css';
+
+type CSSPropertiesWithVars = React.CSSProperties & Record<string, string>;
 
 interface PlayerCardProps {
   player: Player;
@@ -9,6 +18,8 @@ interface PlayerCardProps {
   onUpdate: (updates: Partial<Player>) => void;
   onSetMonarch: (active: boolean) => void;
   onApplyShortcut: (shortcut: DamageShortcut) => void;
+  onLog: (entry: GameLogDraft) => void;
+  variant?: ThemePlayerVariant;
 }
 
 type CardView = 'life' | 'counters' | 'commandZone' | 'commander' | 'settings';
@@ -20,6 +31,20 @@ const shortcutScopeLabels: Record<DamageShortcutScope, string> = {
   self: 'Moi uniquement',
 };
 const viewOrder: CardView[] = ['life', 'counters', 'commandZone', 'commander', 'settings'];
+const CUSTOM_RESOURCE_ICONS = [
+  '🩸',
+  '🛡️',
+  '💎',
+  '🧪',
+  '🍄',
+  '🪙',
+  '🔥',
+  '💧',
+  '🌿',
+  '⚙️',
+  '📜',
+  '🐉',
+];
 
 interface CounterCardProps {
   icon: string;
@@ -51,6 +76,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   onUpdate,
   onSetMonarch,
   onApplyShortcut,
+  onLog,
+  variant,
 }) => {
   const [currentView, setCurrentView] = useState<CardView>('life');
   const [touchStart, setTouchStart] = useState(0);
@@ -61,14 +88,27 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const [comboVisible, setComboVisible] = useState(false);
   const [comboFading, setComboFading] = useState(false);
   const [shortcutLabel, setShortcutLabel] = useState('');
+  const [shortcutAmountInput, setShortcutAmountInput] = useState('-1');
   const [shortcutAmount, setShortcutAmount] = useState(-1);
   const [shortcutScope, setShortcutScope] = useState<DamageShortcutScope>('others');
+  const [customResourceLabel, setCustomResourceLabel] = useState('');
+  const [customResourceIcon, setCustomResourceIcon] = useState(
+    CUSTOM_RESOURCE_ICONS[0] || '🩸'
+  );
   const deathConfirmDeclined = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const comboIdleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const comboCleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const comboActiveRef = useRef(false);
   const previousLifeRef = useRef(player.life);
+
+  const getDefaultShortcutAmount = (scope: DamageShortcutScope) =>
+    scope === 'others' ? -1 : 1;
+
+  const setShortcutAmountProgrammatically = (value: number) => {
+    setShortcutAmount(value);
+    setShortcutAmountInput(String(value));
+  };
 
   const goToNextView = () => {
     const currentIndex = viewOrder.indexOf(currentView);
@@ -118,10 +158,31 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   };
 
   const damageShortcuts = player.damageShortcuts ?? [];
+  const customResources = player.customResources ?? [];
+  const opponents = allPlayers.filter((p) => p.id !== player.id);
   const commanderCastCount = player.commanderCastCount ?? 0;
   const commanderTaxValue = commanderCastCount * 2;
   const commanderDamageValues = Object.values(player.commanderDamage || {});
   const totalCommanderDamage = commanderDamageValues.reduce((sum, dmg) => sum + dmg, 0);
+  const variantStyles: CSSPropertiesWithVars | undefined = variant
+    ? {
+        '--player-variant-overlay': variant.overlay,
+        '--player-variant-border': variant.border,
+        '--player-variant-glow': variant.glow,
+        '--player-variant-accent': variant.accent,
+      }
+    : undefined;
+  const cardClassName = [
+    'player-card',
+    `player-color-${player.color}`,
+    playerDead ? 'dead' : '',
+    variant ? 'with-variant' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const innerClassName = ['player-card-inner', 'ornate-border-simple', variant ? 'with-variant' : '']
+    .filter(Boolean)
+    .join(' ');
 
   const handleApplyShortcut = (shortcut: DamageShortcut) => {
     HAPTICS.lifeChange(shortcut.amount);
@@ -141,19 +202,23 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const handleShortcutScopeChange = (scope: DamageShortcutScope) => {
     setShortcutScope(scope);
     HAPTICS.selection();
-    if (scope === 'self' && shortcutAmount === -1) {
-      setShortcutAmount(1);
-    } else if (scope === 'others' && shortcutAmount === 1) {
-      setShortcutAmount(-1);
-    } else if (scope === 'all' && shortcutAmount === 0) {
-      setShortcutAmount(-1);
+    const baseDefault = getDefaultShortcutAmount(scope);
+    if (!Number.isFinite(shortcutAmount) || shortcutAmount === 0) {
+      const fallback = scope === 'all' && shortcutAmount === 0 ? -1 : baseDefault;
+      setShortcutAmountProgrammatically(fallback);
+      return;
+    }
+    if (scope === 'self' && shortcutAmount < 0) {
+      setShortcutAmountProgrammatically(Math.abs(shortcutAmount));
+    } else if (scope === 'others' && shortcutAmount > 0) {
+      setShortcutAmountProgrammatically(-Math.abs(shortcutAmount));
     }
   };
 
   const handleAddShortcut = () => {
     const trimmedLabel = shortcutLabel.trim();
     if (!trimmedLabel) return;
-    if (!shortcutAmount || Number.isNaN(shortcutAmount) || shortcutAmount === 0) return;
+    if (!Number.isFinite(shortcutAmount) || shortcutAmount === 0) return;
 
     const newShortcut: DamageShortcut = {
       id: `shortcut-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
@@ -171,7 +236,64 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     onUpdate({ damageShortcuts: boundedShortcuts });
     HAPTICS.selection();
     setShortcutLabel('');
-    setShortcutAmount(shortcutScope === 'others' ? -1 : 1);
+    setShortcutAmountProgrammatically(getDefaultShortcutAmount(shortcutScope));
+  };
+
+  const adjustCustomResource = (resourceId: string, amount: number) => {
+    if (!amount) return;
+    const resource = customResources.find((res) => res.id === resourceId);
+    if (!resource) return;
+    const newValue = Math.max(0, resource.value + amount);
+    if (newValue === resource.value) return;
+    HAPTICS.counterChange(amount);
+    const updatedResources = customResources.map((res) =>
+      res.id === resourceId ? { ...res, value: newValue } : res
+    );
+    onUpdate({ customResources: updatedResources });
+    onLog({
+      type: 'resource',
+      message: `${player.name} ${amount > 0 ? '+' : ''}${amount} ${resource.label} (total ${newValue})`,
+      playerIds: [player.id],
+    });
+  };
+
+  const handleAddCustomResource = () => {
+    const trimmedLabel = customResourceLabel.trim();
+    if (!trimmedLabel) return;
+    if (customResources.length >= 6) return;
+
+    const icon = customResourceIcon || CUSTOM_RESOURCE_ICONS[0] || '🩸';
+    const newResource: CustomResource = {
+      id: `resource-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      label: trimmedLabel,
+      icon,
+      value: 0,
+    };
+
+    const updatedResources = [...customResources, newResource];
+    onUpdate({ customResources: updatedResources });
+    HAPTICS.selection();
+    setCustomResourceLabel('');
+    setCustomResourceIcon(CUSTOM_RESOURCE_ICONS[0] || icon);
+    onLog({
+      type: 'resource',
+      message: `${player.name} ajoute la ressource « ${trimmedLabel} ».`,
+      playerIds: [player.id],
+    });
+  };
+
+  const handleDeleteCustomResource = (resourceId: string) => {
+    const removed = customResources.find((res) => res.id === resourceId);
+    const updatedResources = customResources.filter((res) => res.id !== resourceId);
+    onUpdate({ customResources: updatedResources });
+    HAPTICS.cancel();
+    if (removed) {
+      onLog({
+        type: 'resource',
+        message: `${player.name} supprime la ressource « ${removed.label} ».`,
+        playerIds: [player.id],
+      });
+    }
   };
 
   const adjustCommanderCastCount = (delta: number) => {
@@ -180,12 +302,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     if (nextCount === commanderCastCount) return;
     HAPTICS.counterChange(delta);
     onUpdate({ commanderCastCount: nextCount });
+    onLog({
+      type: 'resource',
+      message: `${player.name} ${delta > 0 ? '+' : ''}${delta} sortie${Math.abs(delta) > 1 ? 's' : ''} de commander (taxe +${nextCount * 2}).`,
+      playerIds: [player.id],
+    });
   };
 
   const resetCommanderCastCount = () => {
     if (commanderCastCount === 0) return;
     HAPTICS.cancel();
     onUpdate({ commanderCastCount: 0 });
+    onLog({
+      type: 'resource',
+      message: `${player.name} réinitialise la taxe du commander.`,
+      playerIds: [player.id],
+    });
   };
 
   const handleResetCommanderDamageAgainst = (opponentId: string) => {
@@ -197,6 +329,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         ...player.commanderDamage,
         [opponentId]: 0,
       },
+    });
+    const opponent = allPlayers.find((p) => p.id === opponentId);
+    onLog({
+      type: 'commander',
+      message: `${player.name} réinitialise les dégâts commander de ${opponent ? opponent.name : 'son adversaire'}.`,
+      playerIds: [player.id, opponentId],
     });
   };
 
@@ -217,6 +355,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     }
 
     onUpdate({ life: newLife, lifeHistory: newHistory });
+    onLog({
+      type: 'life',
+      message: `${player.name} ${amount > 0 ? '+' : ''}${amount} PV (→ ${newLife})`,
+      playerIds: [player.id],
+    });
   };
 
   const undoLife = () => {
@@ -228,6 +371,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       HAPTICS.undo();
 
       onUpdate({ life: previousLife, lifeHistory: newHistory });
+      onLog({
+        type: 'life',
+        message: `${player.name} annule le dernier changement (→ ${previousLife} PV)`,
+        playerIds: [player.id],
+      });
     }
   };
 
@@ -235,17 +383,30 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     const newValue = Math.max(0, player[counter] + amount);
     HAPTICS.counterChange(amount);
     onUpdate({ [counter]: newValue });
+    const labels: Record<typeof counter, string> = {
+      poison: 'marqueur poison',
+      energy: 'énergie',
+      experience: 'expérience',
+    };
+    onLog({
+      type: 'resource',
+      message: `${player.name} ${amount > 0 ? '+' : ''}${amount} ${labels[counter]} (total ${newValue})`,
+      playerIds: [player.id],
+    });
   };
 
-  const adjustCustomCounter = (
-    counter: 'treasures' | 'clues' | 'emblems',
-    amount: number
-  ) => {
+  const adjustCustomCounter = (counter: 'treasures', amount: number) => {
     const current = player[counter] ?? 0;
     const newValue = Math.max(0, current + amount);
     if (newValue === current) return;
     HAPTICS.counterChange(amount);
     onUpdate({ [counter]: newValue });
+    const label = counter === 'treasures' ? 'trésor' : counter;
+    onLog({
+      type: 'resource',
+      message: `${player.name} ${amount > 0 ? '+' : ''}${amount} ${label}${Math.abs(amount) > 1 ? 's' : ''} (total ${newValue})`,
+      playerIds: [player.id],
+    });
   };
 
   const adjustCommanderDamage = (opponentId: string, amount: number) => {
@@ -253,25 +414,31 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     const newDamage = Math.max(0, currentDamage + amount);
     HAPTICS.commanderDamage(amount);
     const delta = newDamage - currentDamage;
+    const newLifeTotal = player.life - delta;
     onUpdate({
       commanderDamage: {
         ...player.commanderDamage,
         [opponentId]: newDamage,
       },
-      life: player.life - delta,
+      life: newLifeTotal,
       lifeHistory: delta !== 0
         ? [player.life, ...(player.lifeHistory || [])].slice(0, 5)
         : player.lifeHistory,
     });
     if (delta !== 0) {
       registerComboChange(-delta);
+      const opponent = allPlayers.find((p) => p.id === opponentId);
+      const verb = delta > 0 ? 'subit' : 'retire';
+      onLog({
+        type: 'commander',
+        message: `${player.name} ${verb} ${Math.abs(delta)} dégâts commander ${opponent ? `de ${opponent.name}` : ''} (total ${newDamage}, ${newLifeTotal} PV).`,
+        playerIds: [player.id, opponentId],
+      });
     }
   };
 
   const shouldBeEliminated = player.life <= 0 || player.poison >= 10 ||
     commanderDamageValues.some(dmg => dmg >= 21);
-
-  const opponents = allPlayers.filter(p => p.id !== player.id);
 
   // Check if player should be eliminated and show confirmation
   useEffect(() => {
@@ -305,6 +472,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     setPlayerDead(true);
     setShowDeathConfirm(false);
     deathConfirmDeclined.current = false;
+    onLog({
+      type: 'info',
+      message: `${player.name} est éliminé.`,
+      playerIds: [player.id],
+    });
   };
 
   const handleCancelDeath = () => {
@@ -388,12 +560,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const comboClassName = comboValue > 0 ? 'positive' : comboValue < 0 ? 'negative' : 'neutral';
   const comboDisplayValue = comboValue > 0 ? `+${comboValue}` : comboValue.toString();
   const isShortcutAddDisabled =
-    !shortcutLabel.trim() || Number.isNaN(shortcutAmount) || shortcutAmount === 0;
+    !shortcutLabel.trim() || !Number.isFinite(shortcutAmount) || shortcutAmount === 0;
+  const isCustomResourceAddDisabled =
+    !customResourceLabel.trim() || customResources.length >= 6;
 
   return (
-    <div className={`player-card player-color-${player.color} ${playerDead ? 'dead' : ''}`}>
+    <div
+      className={cardClassName}
+      style={variantStyles}
+    >
       <div
-        className="player-card-inner ornate-border-simple"
+        className={innerClassName}
         ref={cardRef}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -508,12 +685,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               {(player.treasures ?? 0) > 0 && (
                 <span className="summary-badge treasure">🜂 {player.treasures}</span>
               )}
-              {(player.clues ?? 0) > 0 && (
-                <span className="summary-badge clue">🕵 {player.clues}</span>
-              )}
-              {(player.emblems ?? 0) > 0 && (
-                <span className="summary-badge emblem">💀 {player.emblems}</span>
-              )}
+              {customResources
+                .filter((resource) => resource.value > 0)
+                .map((resource) => (
+                  <span key={resource.id} className="summary-badge custom-resource">
+                    {resource.icon} {resource.value}
+                  </span>
+                ))}
               {commanderDamageValues.some(dmg => dmg > 0) && (
                 <span className="summary-badge commander">⚔ {totalCommanderDamage}</span>
               )}
@@ -554,20 +732,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 onDecrease={() => adjustCustomCounter('treasures', -1)}
                 onIncrease={() => adjustCustomCounter('treasures', 1)}
               />
-              <CounterCard
-                icon="⚔"
-                name="Pistes d'indice"
-                value={player.clues || 0}
-                onDecrease={() => adjustCustomCounter('clues', -1)}
-                onIncrease={() => adjustCustomCounter('clues', 1)}
-              />
-              <CounterCard
-                icon="💀"
-                name="Sagas/Emblèmes"
-                value={player.emblems || 0}
-                onDecrease={() => adjustCustomCounter('emblems', -1)}
-                onIncrease={() => adjustCustomCounter('emblems', 1)}
-              />
+              {customResources.map((resource) => (
+                <CounterCard
+                  key={resource.id}
+                  icon={resource.icon}
+                  name={resource.label}
+                  value={resource.value}
+                  onDecrease={() => adjustCustomResource(resource.id, -1)}
+                  onIncrease={() => adjustCustomResource(resource.id, 1)}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -750,11 +924,29 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                   <div className="shortcut-form-grid">
                     <input
                       type="number"
-                      value={Number.isNaN(shortcutAmount) ? '' : shortcutAmount}
+                      inputMode="numeric"
+                      value={shortcutAmountInput}
                       onChange={(e) => {
-                        const value = Number(e.target.value);
-                        const parsed = Number.isNaN(value) ? 0 : Math.trunc(value);
-                        setShortcutAmount(parsed);
+                        const value = e.target.value;
+                        setShortcutAmountInput(value);
+                        const trimmed = value.trim();
+                        if (trimmed === '' || trimmed === '-' || trimmed === '+') {
+                          setShortcutAmount(NaN);
+                          return;
+                        }
+                        const parsed = Number(trimmed);
+                        if (Number.isNaN(parsed)) {
+                          setShortcutAmount(NaN);
+                          return;
+                        }
+                        setShortcutAmount(Math.trunc(parsed));
+                      }}
+                      onBlur={() => {
+                        if (!Number.isFinite(shortcutAmount) || shortcutAmount === 0) {
+                          setShortcutAmountProgrammatically(getDefaultShortcutAmount(shortcutScope));
+                          return;
+                        }
+                        setShortcutAmountProgrammatically(shortcutAmount);
                       }}
                       placeholder="Valeur"
                       step={1}
@@ -781,12 +973,76 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 </div>
               </div>
 
+              <div className="custom-resources-section ornate-border-simple">
+                <h5 className="custom-resources-title">Ressources personnalisées</h5>
+                {customResources.length === 0 ? (
+                  <p className="custom-resources-empty">Aucune ressource ajoutée.</p>
+                ) : (
+                  <ul className="custom-resources-list">
+                    {customResources.map((resource) => (
+                      <li key={resource.id} className="custom-resource-row">
+                        <span className="custom-resource-icon">{resource.icon}</span>
+                        <span className="custom-resource-label">{resource.label}</span>
+                        <span className="custom-resource-value">{resource.value}</span>
+                        <button
+                          type="button"
+                          className="custom-resource-delete"
+                          onClick={() => handleDeleteCustomResource(resource.id)}
+                          title="Supprimer"
+                          aria-label={`Supprimer ${resource.label}`}
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="custom-resource-form">
+                  <input
+                    type="text"
+                    value={customResourceLabel}
+                    onChange={(e) => setCustomResourceLabel(e.target.value)}
+                    placeholder="Nom de la ressource"
+                    maxLength={16}
+                    title="Nom de la ressource"
+                  />
+                  <select
+                    value={customResourceIcon}
+                    onChange={(e) => setCustomResourceIcon(e.target.value)}
+                    title="Icône"
+                  >
+                    {CUSTOM_RESOURCE_ICONS.map((icon) => (
+                      <option key={icon} value={icon}>
+                        {icon}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="custom-resource-add"
+                    onClick={handleAddCustomResource}
+                    disabled={isCustomResourceAddDisabled}
+                    title="Ajouter une ressource personnalisée"
+                  >
+                    Ajouter
+                  </button>
+                </div>
+                {customResources.length >= 6 && (
+                  <p className="custom-resource-limit">Limite de 6 ressources atteinte.</p>
+                )}
+              </div>
+
               <button
                 className="settings-btn kill-btn"
                 onClick={() => {
                   HAPTICS.eliminate();
                   setPlayerDead(true);
                   setShowDeathConfirm(false);
+                  onLog({
+                    type: 'info',
+                    message: `${player.name} est marqué comme éliminé.`,
+                    playerIds: [player.id],
+                  });
                 }}
               >
                 💀 Éliminer le joueur
@@ -798,6 +1054,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                   onClick={() => {
                     HAPTICS.revive();
                     setPlayerDead(false);
+                    onLog({
+                      type: 'info',
+                      message: `${player.name} est ressuscité.`,
+                      playerIds: [player.id],
+                    });
                   }}
                 >
                   ✨ Ressusciter le joueur

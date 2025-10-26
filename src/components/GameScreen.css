@@ -11,7 +11,9 @@
   display: grid;
   gap: 4px;
   padding: 4px;
-  background: var(--color-stone-dark);
+  background: var(--board-background);
+  background-size: cover;
+  position: relative;
 }
 
 /* Layout for 2 players - vertical split */
@@ -58,7 +60,6 @@
   grid-template-rows: 1fr 1fr;
 }
 
-/* Menu button */
 .menu-button {
   position: fixed;
   top: 20px;
