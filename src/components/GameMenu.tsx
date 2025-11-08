@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, ThemeId, GameLogEntry } from '../types';
+import {
+  GameState,
+  ThemeId,
+  GameLogEntry,
+  InitiativeFace,
+  InitiativeTokenPosition,
+} from '../types';
 import { HAPTICS } from '../utils/haptics';
 import { THEME_DEFINITIONS } from '../utils/themes';
+import { InitiativeModal } from './InitiativeModal';
 import './GameMenu.css';
 
 interface GameMenuProps {
@@ -13,6 +20,8 @@ interface GameMenuProps {
   onNewGame: () => void;
   onChangeTheme: (themeId: ThemeId) => void;
   onClearLog: () => void;
+  onSetInitiativeFace: (face: InitiativeFace) => void;
+  onMoveInitiativeToken: (playerId: string, position: InitiativeTokenPosition) => void;
 }
 
 export const GameMenu: React.FC<GameMenuProps> = ({
@@ -24,6 +33,8 @@ export const GameMenu: React.FC<GameMenuProps> = ({
   onNewGame,
   onChangeTheme,
   onClearLog,
+  onSetInitiativeFace,
+  onMoveInitiativeToken,
 }) => {
   const [showDice, setShowDice] = useState(false);
   const [diceRolls, setDiceRolls] = useState<number[]>([]);
@@ -33,6 +44,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showConfirmNew, setShowConfirmNew] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [showInitiative, setShowInitiative] = useState(false);
   const diceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const randomTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const coinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -183,6 +195,16 @@ export const GameMenu: React.FC<GameMenuProps> = ({
 
         <div className="menu-section">
           <h3 className="section-title">Utilitaires</h3>
+
+          <button
+            className="menu-btn"
+            onClick={() => {
+              HAPTICS.selection();
+              setShowInitiative(true);
+            }}
+          >
+            🏰 Initiative
+          </button>
 
           <button
             className="menu-btn"
@@ -484,6 +506,19 @@ export const GameMenu: React.FC<GameMenuProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {showInitiative && (
+        <InitiativeModal
+          players={gameState.players}
+          initiativeState={gameState.initiativeState}
+          onClose={() => {
+            HAPTICS.cancel();
+            setShowInitiative(false);
+          }}
+          onSetFace={onSetInitiativeFace}
+          onMoveToken={onMoveInitiativeToken}
+        />
       )}
     </div>
   );

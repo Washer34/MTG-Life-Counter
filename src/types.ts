@@ -56,6 +56,18 @@ export interface Player {
   customResources?: CustomResource[];
 }
 
+export type InitiativeFace = 'initiative' | 'undercity';
+
+export interface InitiativeTokenPosition {
+  x: number;
+  y: number;
+}
+
+export interface InitiativeState {
+  activeFace: InitiativeFace;
+  tokenPositions: Record<string, InitiativeTokenPosition>;
+}
+
 export type GameLogEntryType =
   | 'life'
   | 'resource'
@@ -87,6 +99,7 @@ export interface GameState {
   config: GameConfig;
   startTime: number;
   log: GameLogEntry[];
+  initiativeState: InitiativeState;
 }
 
 // Dice types

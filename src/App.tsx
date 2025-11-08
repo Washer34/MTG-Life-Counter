@@ -8,6 +8,9 @@ import {
   ThemeId,
   GameLogDraft,
   GameLogEntry,
+  InitiativeState,
+  InitiativeFace,
+  InitiativeTokenPosition,
 } from './types';
 import { SetupScreen } from './components/SetupScreen';
 import { GameScreen } from './components/GameScreen';
@@ -17,6 +20,15 @@ import './App.css';
 
 const STORAGE_KEY = 'mtg-life-counter-state';
 const LOG_LIMIT = 80;
+
+const DEFAULT_TOKEN_SPOTS: InitiativeTokenPosition[] = [
+  { x: 18, y: 12 },
+  { x: 34, y: 12 },
+  { x: 50, y: 12 },
+  { x: 66, y: 12 },
+  { x: 26, y: 20 },
+  { x: 58, y: 20 },
+];
 type OrientationLock =
   | 'any'
   | 'natural'
@@ -41,6 +53,38 @@ const pushLogEntries = (log: GameLogEntry[] = [], entries: GameLogDraft[]) => {
 
 const getThemeName = (themeId: ThemeId) =>
   THEME_DEFINITIONS.find((theme) => theme.id === themeId)?.name ?? themeId;
+
+const createDefaultInitiativeState = (players: Player[]): InitiativeState => {
+  const tokenPositions: Record<string, InitiativeTokenPosition> = {};
+  players.forEach((player, index) => {
+    tokenPositions[player.id] =
+      DEFAULT_TOKEN_SPOTS[index % DEFAULT_TOKEN_SPOTS.length] ?? { x: 50, y: 85 };
+  });
+  return {
+    activeFace: 'initiative',
+    tokenPositions,
+  };
+};
+
+const ensureInitiativeState = (
+  players: Player[],
+  state?: InitiativeState | null
+): InitiativeState => {
+  const base = state ?? createDefaultInitiativeState(players);
+  const nextPositions: Record<string, InitiativeTokenPosition> = {};
+
+  players.forEach((player, index) => {
+    nextPositions[player.id] =
+      base.tokenPositions[player.id] ??
+      DEFAULT_TOKEN_SPOTS[index % DEFAULT_TOKEN_SPOTS.length] ??
+      { x: 50, y: 85 };
+  });
+
+  return {
+    activeFace: base.activeFace ?? 'initiative',
+    tokenPositions: nextPositions,
+  };
+};
 
 function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -97,6 +141,8 @@ function App() {
           customResources: player.customResources ?? [],
         }));
 
+        const initiativeState = ensureInitiativeState(normalisedPlayers, parsed?.initiativeState);
+
         const normalisedState: GameState = {
           players: normalisedPlayers,
           config: {
@@ -107,6 +153,7 @@ function App() {
           },
           startTime: parsed.startTime ?? Date.now(),
           log: parsed.log ?? [],
+          initiativeState,
         };
 
         setSelectedTheme(loadedTheme);
@@ -197,6 +244,7 @@ function App() {
       config,
       startTime: Date.now(),
       log: [],
+      initiativeState: createDefaultInitiativeState(players),
     };
 
     setGameState(newGameState);
@@ -241,6 +289,7 @@ function App() {
         ...prev,
         players: resetPlayers,
         startTime: Date.now(),
+        initiativeState: createDefaultInitiativeState(resetPlayers),
         log: pushLogEntries([], [
           {
             type: 'info',
@@ -332,6 +381,40 @@ function App() {
     });
   };
 
+  const handleSetInitiativeFace = (face: InitiativeFace) => {
+    setGameState((prev) => {
+      if (!prev) return prev;
+      if (prev.initiativeState.activeFace === face) return prev;
+
+      return {
+        ...prev,
+        initiativeState: {
+          ...prev.initiativeState,
+          activeFace: face,
+        },
+      };
+    });
+  };
+
+  const handleMoveInitiativeToken = (playerId: string, position: InitiativeTokenPosition) => {
+    setGameState((prev) => {
+      if (!prev) return prev;
+      if (!prev.players.some((player) => player.id === playerId)) return prev;
+      const nextState = ensureInitiativeState(prev.players, prev.initiativeState);
+
+      return {
+        ...prev,
+        initiativeState: {
+          ...nextState,
+          tokenPositions: {
+            ...nextState.tokenPositions,
+            [playerId]: position,
+          },
+        },
+      };
+    });
+  };
+
   return (
     <div className="app">
       {!gameState ? (
@@ -352,6 +435,8 @@ function App() {
           onLog={appendLog}
           onChangeTheme={handleSelectTheme}
           onClearLog={handleClearLog}
+          onSetInitiativeFace={handleSetInitiativeFace}
+          onMoveInitiativeToken={handleMoveInitiativeToken}
         />
       )}
     </div>

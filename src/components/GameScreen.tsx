@@ -6,6 +6,8 @@ import {
   GameLogDraft,
   ThemeId,
   GameLogEntry,
+  InitiativeFace,
+  InitiativeTokenPosition,
 } from '../types';
 import { PlayerCard } from './PlayerCard';
 import { GameMenu } from './GameMenu';
@@ -25,6 +27,8 @@ interface GameScreenProps {
   onLog: (entry: GameLogDraft) => void;
   onChangeTheme: (themeId: ThemeId) => void;
   onClearLog: () => void;
+  onSetInitiativeFace: (face: InitiativeFace) => void;
+  onMoveInitiativeToken: (playerId: string, position: InitiativeTokenPosition) => void;
 }
 
 export const GameScreen: React.FC<GameScreenProps> = ({
@@ -39,6 +43,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   onLog,
   onChangeTheme,
   onClearLog,
+  onSetInitiativeFace,
+  onMoveInitiativeToken,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { players } = gameState;
@@ -93,6 +99,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           onNewGame={onNewGame}
           onChangeTheme={onChangeTheme}
           onClearLog={onClearLog}
+          onSetInitiativeFace={onSetInitiativeFace}
+          onMoveInitiativeToken={onMoveInitiativeToken}
         />
       )}
 
