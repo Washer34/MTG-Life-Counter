@@ -466,6 +466,29 @@
   background: linear-gradient(180deg, var(--color-gold-dark) 0%, var(--color-gold) 100%);
 }
 
+.download-apk-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  font-size: 1rem;
+  text-align: center;
+  text-decoration: none;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--color-gold);
+  border: 2px solid rgba(212, 175, 55, 0.35);
+  border-radius: 4px;
+  letter-spacing: 1px;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.download-apk-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .setup-title {

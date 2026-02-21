@@ -292,6 +292,15 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({ onStartGame, selectedT
         <button onClick={handleStartGame} className="start-button">
           <span>⚔ Commencer la partie ⚔</span>
         </button>
+
+        <a
+          href="/app-release.apk"
+          download="MTG-Life-Counter.apk"
+          className="download-apk-btn"
+          onClick={() => HAPTICS.selection()}
+        >
+          📱 Télécharger l'app Android (APK · 111 Mo)
+        </a>
       </div>
     </div>
   );
